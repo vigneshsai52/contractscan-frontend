@@ -51,7 +51,6 @@ function App() {
     formData.append('file', file);
 
     try {
-      // --- TIMEOUT FIX: Wait up to 30 seconds for the server to wake up ---
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); 
 
@@ -59,11 +58,10 @@ function App() {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData,
-        signal: controller.signal // Added this line
+        signal: controller.signal
       });
       
-      clearTimeout(timeoutId); // Clear the timer if it connects successfully
-      // ----------------------------------------------------------------------
+      clearTimeout(timeoutId); 
 
       const data = await response.json();
       if (data.error) {
@@ -189,7 +187,8 @@ function App() {
               )}
             </div>
             <div className="bg-gray-900 p-6 rounded-xl text-gray-300 whitespace-pre-wrap leading-relaxed font-mono text-sm border border-gray-700">
-              {result.analysis}
+              {/* THIS IS THE FIX: Show a warning if the AI returns empty text */}
+              {result.analysis ? result.analysis : "⚠️ No text could be extracted from this document. The PDF might be scanned or image-based. Please try a text-based PDF or a DOCX file."}
             </div>
           </div>
         )}
