@@ -1,16 +1,30 @@
-# React + Vite
+# ContractScan 🔍
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+AI-powered contract analyzer. Upload any contract (PDF, DOCX) and receive instant risk assessments, plain-English summaries, and chat with your document.
 
-Currently, two official plugins are available:
+🚀 **Live Demo:** [Click Here to Try It Out!](https://contractscan-frontend.vercel.app) *(Note: Hosted on free tier, takes ~50 seconds to wake up!)*
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ⚡ Features
 
-## React Compiler
+- **AI Analysis:** Instantly identifies contract type, parties, key dates, financial terms, and risky clauses (High/Medium/Low).
+- **Chat with Contract:** Contextual Q&A — ask specific questions about your uploaded document and get answers based *only* on the contract text.
+- **History Dashboard:** View your past 5 analyzed contracts and continue chatting with them anytime.
+- **User Auth:** Secure Sign Up & Login with JWT authentication.
+- **Modern UI:** Built with React + Tailwind CSS with a responsive, dark-mode interface.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Tech Stack
 
-## Expanding the ESLint configuration
+| Layer | Technology |
+|-------|-------------|
+| **Frontend** | React, Tailwind CSS, Vite |
+| **Backend** | Python, Flask, Groq AI (Llama 3.1) |
+| **Database** | SQLite |
+| **Authentication** | JWT (JSON Web Tokens) |
+| **Deployment** | Vercel (Frontend), Render (Backend) |
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🏗️ Architecture
+
+```text
+[ React Frontend (Vercel) ]--(REST API)-->[ Flask Backend (Render) ]
+                                          |--> Groq AI (Analysis/Chat)
+                                          |--> SQLite (History/Auth)
