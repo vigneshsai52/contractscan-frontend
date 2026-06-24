@@ -1,14 +1,48 @@
 import { useState } from 'react';
 
 function App() {
+  const [token, setToken] = useState(localStorage.getItem('token') || null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLogin, setIsLogin] = useState(true);
+  
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    setError(null);
+    
+    const endpoint = isLogin ? '/login' : '/signup';
+    try {
+      const response = await fetch(`https://documind-ai-production-ce16.up.railway.app${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+      if (data.error) {
+        setError(data.error);
+      } else if (data.access_token) {
+        localStorage.setItem('token', data.access_token);
+        setToken(data.access_token);
+      }
+    } catch (err) {
+      setError('Failed to connect to the server.');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+    setResult(null);
+  };
+
   const handleAnalyze = async () => {
     if (!file) return;
-
     setLoading(true);
     setError(null);
     setResult(null);
@@ -17,39 +51,87 @@ function App() {
     formData.append('file', file);
 
     try {
-      // Connecting to your existing Flask Backend on Railway!
       const response = await fetch('https://documind-ai-production-ce16.up.railway.app/analyze', {
         method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
         body: formData
       });
 
       const data = await response.json();
-
       if (data.error) {
         setError(data.error);
       } else {
         setResult(data);
       }
     } catch (err) {
-      setError('Failed to connect to the AI server. Please try again.');
+      setError('Failed to connect to the AI server.');
     } finally {
       setLoading(false);
     }
   };
 
+  if (!token) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-800 text-white flex items-center justify-center p-4">
+        <div className="bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700 w-full max-w-md">
+          <h2 className="text-3xl font-bold mb-6 text-center text-blue-400">
+            {isLogin ? "Login to ContractScan" : "Create Account"}
+          </h2>
+          
+          {error && <p className="text-red-400 mb-4 text-center text-sm">{error}</p>}
+          
+          <form onSubmit={handleAuth} className="space-y-4">
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 outline-none"
+              required
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 outline-none"
+              required
+            />
+            <button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded font-semibold transition-colors"
+            >
+              {isLogin ? "Login" : "Sign Up"}
+            </button>
+          </form>
+
+          <p className="mt-4 text-center text-gray-400 text-sm">
+            {isLogin ? "Don't have an account? " : "Already have an account? "}
+            <button onClick={() => { setIsLogin(!isLogin); setError(null); }} className="text-blue-400 hover:underline">
+              {isLogin ? "Sign Up" : "Login"}
+            </button>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-800 text-white flex flex-col items-center p-8">
       <div className="max-w-3xl w-full">
         
-        {/* Header */}
-        <h1 className="text-5xl font-extrabold mb-2 text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
-          ContractScan 🔍
-        </h1>
-        <p className="text-gray-400 text-center mb-10 text-lg">
-          AI-powered contract analysis. Know what you're signing.
-        </p>
+        <div className="flex justify-between items-center mb-10">
+          <div>
+            <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+              ContractScan 🔍
+            </h1>
+            <p className="text-gray-400 text-lg">AI-powered contract analysis</p>
+          </div>
+          <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded font-semibold text-sm">
+            Logout
+          </button>
+        </div>
 
-        {/* Upload Card */}
         <div className="bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700 mb-6">
           <div className="border-2 border-dashed border-gray-600 rounded-xl p-10 text-center hover:border-blue-500 transition-colors cursor-pointer">
             <input
@@ -77,7 +159,6 @@ function App() {
           </button>
         </div>
 
-        {/* Error Message */}
         {error && (
           <div className="bg-red-900/50 border border-red-500 text-red-200 p-6 rounded-2xl mb-6">
             <p className="font-bold text-lg mb-1">❌ Error</p>
@@ -85,7 +166,6 @@ function App() {
           </div>
         )}
 
-        {/* Result Display */}
         {result && (
           <div className="bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700">
             <div className="flex items-center gap-4 mb-6">
