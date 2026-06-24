@@ -28,3 +28,25 @@ AI-powered contract analyzer. Upload any contract (PDF, DOCX) and receive instan
 [ React Frontend (Vercel) ]--(REST API)-->[ Flask Backend (Render) ]
                                           |--> Groq AI (Analysis/Chat)
                                           |--> SQLite (History/Auth)
+```
+
+## 🚀 Getting Started
+
+### Frontend (This Repo)
+
+```bash
+git clone https://github.com/vigneshsai52/contractscan-frontend.git
+cd contractscan-frontend
+npm install
+npm run dev
+```
+
+### Backend
+
+Visit the [Backend Repository](https://github.com/vigneshsai52/contractscan)
+
+## 📝 License
+
+MIT License — free to use and modify.
+
+Built with ❤️ by Udayagiri Vignesh Sai
