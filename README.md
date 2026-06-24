@@ -10,7 +10,7 @@ AI-powered contract analyzer. Upload any contract (PDF, DOCX) and receive instan
 
 ## 🎥 Live Demo
 
-> **🚀 [Try ContractScan Now!](https://contractscan-frontend.vercel.app)**
+> **🚀 [Try ContractScan Now!](https://contractscan-frontend-three.vercel.app/)**
 > *(Note: Hosted on free tier, takes ~50 seconds to wake up!)*
 
 ---
