@@ -17,7 +17,7 @@ function App() {
     
     const endpoint = isLogin ? '/login' : '/signup';
     try {
-      const response = await fetch(`https://documind-ai-production-ea70.up.railway.app${endpoint}`, {
+      const response = await fetch(`https://contractscan-backend-bstz.onrender.com${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -54,7 +54,7 @@ function App() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); 
 
-      const response = await fetch('https://documind-ai-production-ea70.up.railway.app/analyze', {
+      const response = await fetch('https://contractscan-backend-bstz.onrender.com/analyze', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData,
