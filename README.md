@@ -2,7 +2,7 @@
 
 AI-powered contract analyzer. Upload any contract (PDF, DOCX) and receive instant risk assessments, plain-English summaries, and chat with your document.
 
-🚀 **Live Demo:** [Click Here to Try It Out!](https://contractscan-frontend.vercel.app) *(Note: Hosted on free tier, takes ~50 seconds to wake up!)*
+🚀 **Live Demo:** [Click Here to Try It Out!](https://contractscan-frontend-three.vercel.app/) *(Note: Hosted on free tier, takes ~50 seconds to wake up!)*
 
 ## ⚡ Features
 
