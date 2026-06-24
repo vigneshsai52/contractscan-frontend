@@ -51,11 +51,19 @@ function App() {
     formData.append('file', file);
 
     try {
+      // --- TIMEOUT FIX: Wait up to 30 seconds for the server to wake up ---
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); 
+
       const response = await fetch('https://documind-ai-production-ce16.up.railway.app/analyze', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
+        body: formData,
+        signal: controller.signal // Added this line
       });
+      
+      clearTimeout(timeoutId); // Clear the timer if it connects successfully
+      // ----------------------------------------------------------------------
 
       const data = await response.json();
       if (data.error) {
@@ -64,7 +72,11 @@ function App() {
         setResult(data);
       }
     } catch (err) {
-      setError('Failed to connect to the AI server.');
+      if (err.name === 'AbortError') {
+        setError('Server is waking up. Please try again in 10 seconds.');
+      } else {
+        setError('Failed to connect to the AI server.');
+      }
     } finally {
       setLoading(false);
     }
