@@ -8,12 +8,16 @@ function App() {
   
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleAuth = async (e) => {
     e.preventDefault();
     setError(null);
+    setSuccessMessage(null);
+    setAuthLoading(true);
     
     const endpoint = isLogin ? '/login' : '/signup';
     try {
@@ -24,14 +28,25 @@ function App() {
       });
 
       const data = await response.json();
+      
       if (data.error) {
         setError(data.error);
       } else if (data.access_token) {
+        // Login Success
         localStorage.setItem('token', data.access_token);
         setToken(data.access_token);
+      } else if (data.message) {
+        // Signup Success
+        setSuccessMessage("✅ Account created successfully! Redirecting to login...");
+        setTimeout(() => {
+          setIsLogin(true);
+          setSuccessMessage(null);
+        }, 2000);
       }
     } catch (err) {
-      setError('Failed to connect to the server.');
+      setError('Failed to connect. The server might be waking up (takes ~50 seconds on free tier). Please wait and try again.');
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -52,7 +67,7 @@ function App() {
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); 
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout for AI processing
 
       const response = await fetch('https://contractscan-backend-bstz.onrender.com/analyze', {
         method: 'POST',
@@ -71,7 +86,7 @@ function App() {
       }
     } catch (err) {
       if (err.name === 'AbortError') {
-        setError('Server is waking up. Please try again in 10 seconds.');
+        setError('Server is waking up or AI is processing. Please try again in 30 seconds.');
       } else {
         setError('Failed to connect to the AI server.');
       }
@@ -80,15 +95,26 @@ function App() {
     }
   };
 
+  // --- AUTH SCREEN ---
   if (!token) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-800 text-white flex items-center justify-center p-4">
-        <div className="bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700 w-full max-w-md">
+        <div className="bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700 w-full max-w-md transition-all duration-300">
           <h2 className="text-3xl font-bold mb-6 text-center text-blue-400">
             {isLogin ? "Login to ContractScan" : "Create Account"}
           </h2>
           
-          {error && <p className="text-red-400 mb-4 text-center text-sm">{error}</p>}
+          {error && (
+            <div className="bg-red-900/50 border border-red-500 text-red-200 p-3 rounded-lg mb-4 text-sm">
+              {error}
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="bg-green-900/50 border border-green-500 text-green-200 p-3 rounded-lg mb-4 text-sm font-semibold animate-pulse">
+              {successMessage}
+            </div>
+          )}
           
           <form onSubmit={handleAuth} className="space-y-4">
             <input
@@ -96,28 +122,45 @@ function App() {
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 outline-none"
+              className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 outline-none disabled:opacity-50"
               required
+              disabled={authLoading || !!successMessage}
             />
             <input
               type="password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 outline-none"
+              className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 outline-none disabled:opacity-50"
               required
+              disabled={authLoading || !!successMessage}
             />
             <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded font-semibold transition-colors"
+              disabled={authLoading || !!successMessage}
+              className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {isLogin ? "Login" : "Sign Up"}
+              {authLoading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {isLogin ? "Logging In..." : "Creating Account..."}
+                </>
+              ) : (
+                isLogin ? "Login" : "Sign Up"
+              )}
             </button>
           </form>
 
           <p className="mt-4 text-center text-gray-400 text-sm">
             {isLogin ? "Don't have an account? " : "Already have an account? "}
-            <button onClick={() => { setIsLogin(!isLogin); setError(null); }} className="text-blue-400 hover:underline">
+            <button 
+              onClick={() => { setIsLogin(!isLogin); setError(null); setSuccessMessage(null); }} 
+              className="text-blue-400 hover:underline font-semibold"
+              disabled={authLoading}
+            >
               {isLogin ? "Sign Up" : "Login"}
             </button>
           </p>
@@ -126,6 +169,7 @@ function App() {
     );
   }
 
+  // --- MAIN APP SCREEN ---
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-800 text-white flex flex-col items-center p-8">
       <div className="max-w-3xl w-full">
@@ -137,7 +181,7 @@ function App() {
             </h1>
             <p className="text-gray-400 text-lg">AI-powered contract analysis</p>
           </div>
-          <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded font-semibold text-sm">
+          <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded font-semibold text-sm transition-colors">
             Logout
           </button>
         </div>
@@ -163,9 +207,19 @@ function App() {
           <button
             onClick={handleAnalyze}
             disabled={!file || loading}
-            className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg"
+            className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg flex items-center justify-center gap-2"
           >
-            {loading ? '⏳ Analyzing with AI...' : '🔍 Analyze Contract'}
+            {loading ? (
+              <>
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Analyzing with AI...
+              </>
+            ) : (
+              '🔍 Analyze Contract'
+            )}
           </button>
         </div>
 
@@ -187,7 +241,6 @@ function App() {
               )}
             </div>
             <div className="bg-gray-900 p-6 rounded-xl text-gray-300 whitespace-pre-wrap leading-relaxed font-mono text-sm border border-gray-700">
-              {/* THIS IS THE FIX: Show a warning if the AI returns empty text */}
               {result.analysis ? result.analysis : "⚠️ No text could be extracted from this document. The PDF might be scanned or image-based. Please try a text-based PDF or a DOCX file."}
             </div>
           </div>
