@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token') || null);
@@ -13,6 +13,16 @@ function App() {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
 
+  // History & Chat States
+  const [view, setView] = useState('analyze'); // 'analyze', 'history', 'chat'
+  const [historyList, setHistoryList] = useState([]);
+  const [selectedHistory, setSelectedHistory] = useState(null);
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatLoading, setChatLoading] = useState(false);
+
+  const API_URL = 'https://contractscan-backend-bstz.onrender.com';
+
   const handleAuth = async (e) => {
     e.preventDefault();
     setError(null);
@@ -21,7 +31,7 @@ function App() {
     
     const endpoint = isLogin ? '/login' : '/signup';
     try {
-      const response = await fetch(`https://contractscan-backend-bstz.onrender.com${endpoint}`, {
+      const response = await fetch(`${API_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -32,11 +42,9 @@ function App() {
       if (data.error) {
         setError(data.error);
       } else if (data.access_token) {
-        // Login Success
         localStorage.setItem('token', data.access_token);
         setToken(data.access_token);
       } else if (data.message) {
-        // Signup Success
         setSuccessMessage("✅ Account created successfully! Redirecting to login...");
         setTimeout(() => {
           setIsLogin(true);
@@ -44,7 +52,7 @@ function App() {
         }, 2000);
       }
     } catch (err) {
-      setError('Failed to connect. The server might be waking up (takes ~50 seconds on free tier). Please wait and try again.');
+      setError('Failed to connect. The server might be waking up (takes ~50 seconds). Please wait and try again.');
     } finally {
       setAuthLoading(false);
     }
@@ -54,6 +62,7 @@ function App() {
     localStorage.removeItem('token');
     setToken(null);
     setResult(null);
+    setView('analyze');
   };
 
   const handleAnalyze = async () => {
@@ -67,9 +76,9 @@ function App() {
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout for AI processing
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-      const response = await fetch('https://contractscan-backend-bstz.onrender.com/analyze', {
+      const response = await fetch(`${API_URL}/analyze`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData,
@@ -95,72 +104,80 @@ function App() {
     }
   };
 
+  const fetchHistory = async () => {
+    try {
+      const response = await fetch(`${API_URL}/history`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      setHistoryList(data);
+      setView('history');
+    } catch (err) {
+      setError('Failed to load history.');
+    }
+  };
+
+  const openChat = (item) => {
+    setSelectedHistory(item);
+    setChatMessages([{ role: 'assistant', text: `Ask me anything about ${item.filename}!` }]);
+    setView('chat');
+  };
+
+  const handleChatSubmit = async (e) => {
+    e.preventDefault();
+    if (!chatInput.trim()) return;
+
+    const userMsg = chatInput;
+    setChatMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+    setChatInput('');
+    setChatLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/chat`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
+        body: JSON.stringify({ history_id: selectedHistory.id, question: userMsg })
+      });
+
+      const data = await response.json();
+      if (data.error) {
+        setChatMessages(prev => [...prev, { role: 'assistant', text: `Error: ${data.error}` }]);
+      } else {
+        setChatMessages(prev => [...prev, { role: 'assistant', text: data.answer }]);
+      }
+    } catch (err) {
+      setChatMessages(prev => [...prev, { role: 'assistant', text: 'Failed to connect.' }]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
   // --- AUTH SCREEN ---
   if (!token) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-800 text-white flex items-center justify-center p-4">
-        <div className="bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700 w-full max-w-md transition-all duration-300">
+        <div className="bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700 w-full max-w-md">
           <h2 className="text-3xl font-bold mb-6 text-center text-blue-400">
             {isLogin ? "Login to ContractScan" : "Create Account"}
           </h2>
           
-          {error && (
-            <div className="bg-red-900/50 border border-red-500 text-red-200 p-3 rounded-lg mb-4 text-sm">
-              {error}
-            </div>
-          )}
-
-          {successMessage && (
-            <div className="bg-green-900/50 border border-green-500 text-green-200 p-3 rounded-lg mb-4 text-sm font-semibold animate-pulse">
-              {successMessage}
-            </div>
-          )}
+          {error && <div className="bg-red-900/50 border border-red-500 text-red-200 p-3 rounded-lg mb-4 text-sm">{error}</div>}
+          {successMessage && <div className="bg-green-900/50 border border-green-500 text-green-200 p-3 rounded-lg mb-4 text-sm font-semibold animate-pulse">{successMessage}</div>}
           
           <form onSubmit={handleAuth} className="space-y-4">
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 outline-none disabled:opacity-50"
-              required
-              disabled={authLoading || !!successMessage}
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 outline-none disabled:opacity-50"
-              required
-              disabled={authLoading || !!successMessage}
-            />
-            <button
-              type="submit"
-              disabled={authLoading || !!successMessage}
-              className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {authLoading ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  {isLogin ? "Logging In..." : "Creating Account..."}
-                </>
-              ) : (
-                isLogin ? "Login" : "Sign Up"
-              )}
+            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 outline-none disabled:opacity-50" required disabled={authLoading || !!successMessage} />
+            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 outline-none disabled:opacity-50" required disabled={authLoading || !!successMessage} />
+            <button type="submit" disabled={authLoading || !!successMessage} className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+              {authLoading ? 'Processing...' : (isLogin ? "Login" : "Sign Up")}
             </button>
           </form>
 
           <p className="mt-4 text-center text-gray-400 text-sm">
             {isLogin ? "Don't have an account? " : "Already have an account? "}
-            <button 
-              onClick={() => { setIsLogin(!isLogin); setError(null); setSuccessMessage(null); }} 
-              className="text-blue-400 hover:underline font-semibold"
-              disabled={authLoading}
-            >
+            <button onClick={() => { setIsLogin(!isLogin); setError(null); setSuccessMessage(null); }} className="text-blue-400 hover:underline font-semibold" disabled={authLoading}>
               {isLogin ? "Sign Up" : "Login"}
             </button>
           </p>
@@ -171,78 +188,108 @@ function App() {
 
   // --- MAIN APP SCREEN ---
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-800 text-white flex flex-col items-center p-8">
-      <div className="max-w-3xl w-full">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-800 text-white flex flex-col p-8">
+      <div className="max-w-4xl w-full mx-auto flex-1">
         
-        <div className="flex justify-between items-center mb-10">
+        <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
-              ContractScan 🔍
-            </h1>
-            <p className="text-gray-400 text-lg">AI-powered contract analysis</p>
+            <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">ContractScan 🔍</h1>
+            <p className="text-gray-400">AI-powered contract analysis</p>
           </div>
-          <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded font-semibold text-sm transition-colors">
-            Logout
-          </button>
-        </div>
-
-        <div className="bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700 mb-6">
-          <div className="border-2 border-dashed border-gray-600 rounded-xl p-10 text-center hover:border-blue-500 transition-colors cursor-pointer">
-            <input
-              type="file"
-              accept=".pdf,.docx,.doc,.txt"
-              onChange={(e) => setFile(e.target.files[0])}
-              className="hidden"
-              id="file-upload"
-            />
-            <label htmlFor="file-upload" className="cursor-pointer">
-              <div className="text-6xl mb-4">📄</div>
-              <p className="text-xl font-semibold mb-2">
-                {file ? file.name : "Click to Upload Contract"}
-              </p>
-              <p className="text-sm text-gray-400">PDF, DOCX, DOC, or TXT</p>
-            </label>
+          <div className="flex gap-3">
+            <button onClick={() => setView('analyze')} className={`px-4 py-2 rounded font-semibold text-sm transition-colors ${view === 'analyze' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}>Upload</button>
+            <button onClick={fetchHistory} className={`px-4 py-2 rounded font-semibold text-sm transition-colors ${view === 'history' || view === 'chat' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}>History</button>
+            <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded font-semibold text-sm transition-colors">Logout</button>
           </div>
-
-          <button
-            onClick={handleAnalyze}
-            disabled={!file || loading}
-            className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-lg flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
-                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Analyzing with AI...
-              </>
-            ) : (
-              '🔍 Analyze Contract'
-            )}
-          </button>
         </div>
 
         {error && (
-          <div className="bg-red-900/50 border border-red-500 text-red-200 p-6 rounded-2xl mb-6">
-            <p className="font-bold text-lg mb-1">❌ Error</p>
-            <p>{error}</p>
+          <div className="bg-red-900/50 border border-red-500 text-red-200 p-4 rounded-lg mb-6 text-sm">{error}</div>
+        )}
+
+        {/* --- UPLOAD VIEW --- */}
+        {view === 'analyze' && (
+          <div className="bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700 mb-6">
+            <div className="border-2 border-dashed border-gray-600 rounded-xl p-10 text-center hover:border-blue-500 transition-colors cursor-pointer">
+              <input type="file" accept=".pdf,.docx,.doc,.txt" onChange={(e) => setFile(e.target.files[0])} className="hidden" id="file-upload" />
+              <label htmlFor="file-upload" className="cursor-pointer">
+                <div className="text-6xl mb-4">📄</div>
+                <p className="text-xl font-semibold mb-2">{file ? file.name : "Click to Upload Contract"}</p>
+                <p className="text-sm text-gray-400">PDF, DOCX, DOC, or TXT</p>
+              </label>
+            </div>
+            <button onClick={handleAnalyze} disabled={!file || loading} className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-all disabled:opacity-50 text-lg flex items-center justify-center gap-2">
+              {loading ? '⏳ Analyzing with AI...' : '🔍 Analyze Contract'}
+            </button>
           </div>
         )}
 
-        {result && (
+        {/* --- RESULT VIEW --- */}
+        {view === 'analyze' && result && (
           <div className="bg-gray-800 p-8 rounded-2xl shadow-xl border border-gray-700">
             <div className="flex items-center gap-4 mb-6">
               <h2 className="text-2xl font-bold text-green-400">✅ Analysis Complete</h2>
-              {result.is_likely_contract ? (
-                 <span className="bg-green-600 text-xs font-bold px-3 py-1 rounded-full">Contract Detected</span>
-              ) : (
-                 <span className="bg-yellow-600 text-xs font-bold px-3 py-1 rounded-full">May not be a contract</span>
-              )}
+              {result.is_likely_contract ? <span className="bg-green-600 text-xs font-bold px-3 py-1 rounded-full">Contract Detected</span> : <span className="bg-yellow-600 text-xs font-bold px-3 py-1 rounded-full">May not be a contract</span>}
             </div>
             <div className="bg-gray-900 p-6 rounded-xl text-gray-300 whitespace-pre-wrap leading-relaxed font-mono text-sm border border-gray-700">
-              {result.analysis ? result.analysis : "⚠️ No text could be extracted from this document. The PDF might be scanned or image-based. Please try a text-based PDF or a DOCX file."}
+              {result.analysis ? result.analysis : "⚠️ No text could be extracted. Try a text-based PDF or DOCX."}
             </div>
+          </div>
+        )}
+
+        {/* --- HISTORY VIEW --- */}
+        {view === 'history' && (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-white">Recent Analyses</h2>
+            {historyList.length === 0 ? (
+              <p className="text-gray-400 mt-4">No history yet. Upload a contract to get started!</p>
+            ) : (
+              historyList.map(item => (
+                <div key={item.id} className="bg-gray-800 p-5 rounded-xl border border-gray-700 flex justify-between items-center hover:border-blue-500 transition-colors">
+                  <div>
+                    <h3 className="font-semibold text-lg">{item.filename}</h3>
+                    <p className="text-gray-400 text-sm">{new Date(item.date).toLocaleString()}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => { setResult({analysis: item.analysis, is_likely_contract: true}); setView('analyze'); }} className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded text-sm font-semibold">View</button>
+                    <button onClick={() => openChat(item)} className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm font-semibold">💬 Chat</button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* --- CHAT VIEW --- */}
+        {view === 'chat' && selectedHistory && (
+          <div className="flex flex-col h-[70vh] bg-gray-800 rounded-2xl border border-gray-700 shadow-xl">
+            <div className="p-4 border-b border-gray-700 flex justify-between items-center">
+              <h3 className="font-bold text-lg">Chat about: {selectedHistory.filename}</h3>
+              <button onClick={() => setView('history')} className="text-gray-400 hover:text-white text-sm">← Back to History</button>
+            </div>
+            
+            <div className="flex-1 p-4 overflow-y-auto space-y-4">
+              {chatMessages.map((msg, idx) => (
+                <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[80%] p-3 rounded-xl ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200'}`}>
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+              {chatLoading && <div className="text-gray-400 text-sm">AI is thinking...</div>}
+            </div>
+
+            <form onSubmit={handleChatSubmit} className="p-4 border-t border-gray-700 flex gap-2">
+              <input 
+                type="text" 
+                value={chatInput} 
+                onChange={(e) => setChatInput(e.target.value)} 
+                placeholder="Ask about this contract..." 
+                className="flex-1 bg-gray-700 border border-gray-600 rounded-lg p-3 text-white outline-none focus:border-blue-500"
+                disabled={chatLoading}
+              />
+              <button type="submit" disabled={chatLoading} className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-semibold disabled:opacity-50">Send</button>
+            </form>
           </div>
         )}
 
