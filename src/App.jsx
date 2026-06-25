@@ -1,48 +1,158 @@
 import { useState, useEffect, useRef } from 'react';
 
-// ─── INLINE CSS ANIMATIONS (no tailwindcss-animate plugin needed) ───
-const animationStyles = `
+// ─── INLINE CSS FOR ANIMATIONS & KEYFRAMES ───
+const globalStyles = `
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(30px); }
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.1; }
-  50% { opacity: 0.2; }
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
 }
-@keyframes spin-slow {
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  50% { opacity: 0.3; transform: scale(1.1); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-@keyframes bounce-dot {
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
+@keyframes typingBounce {
+  0%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-6px); }
 }
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
 .animate-fade-in-up {
-  animation: fadeInUp 0.5s ease-out forwards;
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
+  animation: fadeIn 0.4s ease-out forwards;
+}
+.animate-slide-in-right {
+  animation: slideInRight 0.5s ease-out forwards;
 }
 .animate-pulse-glow {
-  animation: pulse-glow 4s ease-in-out infinite;
+  animation: pulseGlow 6s ease-in-out infinite;
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
 }
 .animate-spin-slow {
-  animation: spin-slow 1s linear infinite;
+  animation: spin 1s linear infinite;
 }
-.bounce-dot {
-  animation: bounce-dot 1.4s ease-in-out infinite both;
+.typing-dot {
+  animation: typingBounce 1.4s ease-in-out infinite both;
+}
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gradient-text-hero {
+  background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 50%, #c2e9fb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gradient-text-accent {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #ffd1ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass-card {
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.glass-card:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 60px rgba(99, 102, 241, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.glow-button {
+  position: relative;
+  overflow: hidden;
+}
+.glow-button::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+.glow-button:hover::before {
+  left: 100%;
+}
+
+.hero-gradient-bg {
+  background: radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 50%, rgba(168, 85, 247, 0.15) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 0%, rgba(56, 189, 248, 0.1) 0%, transparent 50%),
+              #0f172a;
+}
+
+.mesh-gradient {
+  background: 
+    radial-gradient(at 40% 20%, hsla(266,59%,49%,0.3) 0px, transparent 50%),
+    radial-gradient(at 80% 0%, hsla(189,100%,56%,0.2) 0px, transparent 50%),
+    radial-gradient(at 0% 50%, hsla(340,100%,76%,0.2) 0px, transparent 50%),
+    radial-gradient(at 80% 50%, hsla(266,59%,49%,0.2) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(189,100%,56%,0.2) 0px, transparent 50%),
+    #0f172a;
+}
+
+.grid-pattern {
+  background-image: 
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+.noise-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
 }
 `;
 
-// ─── ICONS (inline SVG, zero dependencies) ───
+// ─── ICONS ───
 const Logo = () => (
-  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="32" height="32" rx="8" fill="url(#logoGrad)" />
+  <svg width="36" height="36" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="32" height="32" rx="10" fill="url(#logoGrad)" />
     <path d="M10 16L14 20L22 12" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     <defs>
       <linearGradient id="logoGrad" x1="0" y1="0" x2="32" y2="32">
@@ -54,7 +164,7 @@ const Logo = () => (
 );
 
 const UploadIcon = () => (
-  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
     <polyline points="17 8 12 3 7 8" />
     <line x1="12" y1="3" x2="12" y2="15" />
@@ -62,7 +172,7 @@ const UploadIcon = () => (
 );
 
 const SparkleIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6Z" />
   </svg>
 );
@@ -80,7 +190,7 @@ const ZapIcon = () => (
 );
 
 const FileTextIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
     <polyline points="14 2 14 8 20 8" />
   </svg>
@@ -146,57 +256,116 @@ const WarningIcon = () => (
   </svg>
 );
 
-// ─── ANIMATED BACKGROUND ───
-const AnimatedBackground = () => (
-  <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-    <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl animate-pulse-glow" />
-    <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse-glow" style={{ animationDelay: '1s' }} />
-    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-3xl" />
-    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0a0f1c] to-[#050810]" />
-  </div>
+const ChevronLeftIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
 );
 
-// ─── GLOWING BUTTON ───
+const DocumentIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
+    <polyline points="10 9 9 9 8 9" />
+  </svg>
+);
+
+const ArrowUpIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5" />
+    <polyline points="5 12 12 5 19 12" />
+  </svg>
+);
+
+// ─── REUSABLE COMPONENTS ───
+const Navbar = ({ token, onNavigate, onLogout, activeView }) => (
+  <nav className="sticky top-0 z-50 border-b border-white/5 backdrop-blur-xl bg-[#0f172a]/80">
+    <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div className="flex items-center gap-3 cursor-pointer group" onClick={() => onNavigate('landing')}>
+        <div className="group-hover:scale-110 transition-transform duration-300">
+          <Logo />
+        </div>
+        <span className="text-xl font-bold tracking-tight text-white">ContractScan</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={() => onNavigate('analyze')} 
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+            activeView === 'analyze' 
+              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' 
+              : 'text-slate-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <SparkleIcon /> Analyze
+        </button>
+        <button 
+          onClick={() => onNavigate('history')} 
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+            activeView === 'history' || activeView === 'chat'
+              ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' 
+              : 'text-slate-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <HistoryIcon /> History
+        </button>
+        <button 
+          onClick={onLogout}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-300 ml-2"
+        >
+          <LogoutIcon /> Logout
+        </button>
+      </div>
+    </div>
+  </nav>
+);
+
 const GlowButton = ({ children, onClick, disabled, variant = 'primary', className = '', type = 'button' }) => {
-  const base = "relative px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden";
   const variants = {
-    primary: "bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:from-indigo-400 hover:to-purple-500 hover:shadow-[0_0_30px_rgba(99,102,241,0.4)] hover:-translate-y-0.5 active:translate-y-0",
-    secondary: "bg-slate-800/80 text-slate-200 border border-slate-700 hover:border-slate-500 hover:bg-slate-700/80 hover:-translate-y-0.5 active:translate-y-0",
-    danger: "bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 hover:-translate-y-0.5",
-    ghost: "text-slate-400 hover:text-white hover:bg-slate-800/50"
+    primary: 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white glow-button hover:shadow-[0_0_40px_rgba(99,102,241,0.4)] hover:-translate-y-0.5 active:translate-y-0',
+    secondary: 'bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10 hover:border-white/20 hover:-translate-y-0.5',
+    danger: 'bg-red-500/10 text-red-300 border border-red-500/20 hover:bg-red-500/20 hover:-translate-y-0.5',
+    ghost: 'text-slate-400 hover:text-white'
   };
   return (
-    <button type={type} onClick={onClick} disabled={disabled} className={`${base} ${variants[variant]} ${className}`}>
+    <button 
+      type={type} 
+      onClick={onClick} 
+      disabled={disabled} 
+      className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 ${variants[variant]} ${className}`}
+    >
       {children}
     </button>
   );
 };
 
-// ─── GLASS CARD ───
-const GlassCard = ({ children, className = '', hover = true }) => (
-  <div className={`bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 rounded-2xl shadow-xl ${hover ? 'hover:border-slate-500/50 hover:shadow-2xl hover:shadow-indigo-500/5 transition-all duration-500' : ''} ${className}`}>
+const Card = ({ children, className = '', hover = true }) => (
+  <div className={`glass-card rounded-2xl p-6 transition-all duration-500 ${hover ? 'hover:scale-[1.02]' : ''} ${className}`}>
     {children}
   </div>
 );
 
-// ─── TYPING INDICATOR ───
+const Badge = ({ children, color = 'indigo' }) => {
+  const colors = {
+    indigo: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20',
+    emerald: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
+    amber: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
+    pink: 'bg-pink-500/10 text-pink-300 border-pink-500/20'
+  };
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${colors[color]}`}>
+      {children}
+    </span>
+  );
+};
+
 const TypingIndicator = () => (
   <div className="flex gap-1.5 items-center px-4 py-3">
-    <div className="w-2 h-2 bg-slate-400 rounded-full bounce-dot" />
-    <div className="w-2 h-2 bg-slate-400 rounded-full bounce-dot" style={{ animationDelay: '0.15s' }} />
-    <div className="w-2 h-2 bg-slate-400 rounded-full bounce-dot" style={{ animationDelay: '0.3s' }} />
+    <div className="w-2 h-2 bg-slate-400 rounded-full typing-dot" />
+    <div className="w-2 h-2 bg-slate-400 rounded-full typing-dot" />
+    <div className="w-2 h-2 bg-slate-400 rounded-full typing-dot" />
   </div>
-);
-
-// ─── FEATURE CARD ───
-const FeatureCard = ({ icon, title, description }) => (
-  <GlassCard className="p-6 group">
-    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4 group-hover:scale-110 transition-transform duration-300">
-      {icon}
-    </div>
-    <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
-    <p className="text-slate-400 text-sm leading-relaxed">{description}</p>
-  </GlassCard>
 );
 
 // ─── MAIN APP ───
@@ -396,23 +565,28 @@ function App() {
   // ─── AUTH SCREEN ───
   if (!token) {
     return (
-      <div className="min-h-screen text-white relative overflow-hidden">
-        <style>{animationStyles}</style>
-        <AnimatedBackground />
+      <div className="min-h-screen text-white relative overflow-hidden mesh-gradient">
+        <style>{globalStyles}</style>
+        <div className="noise-overlay" />
 
-        <div className="min-h-screen flex items-center justify-center p-4">
+        {/* Floating orbs */}
+        <div className="fixed top-20 left-20 w-72 h-72 bg-indigo-500/20 rounded-full blur-[100px] animate-pulse-glow" />
+        <div className="fixed bottom-20 right-20 w-96 h-96 bg-purple-500/20 rounded-full blur-[120px] animate-pulse-glow" style={{ animationDelay: '2s' }} />
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[150px]" />
+
+        <div className="min-h-screen flex items-center justify-center p-4 relative z-10">
           <div className={`w-full max-w-md transition-all duration-500 ${pageTransition ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-            <GlassCard className="p-8" hover={false}>
+            <Card className="p-8" hover={false}>
               <div className="flex items-center justify-center gap-3 mb-8">
                 <Logo />
-                <span className="text-2xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">ContractScan</span>
+                <span className="text-2xl font-bold text-white">ContractScan</span>
               </div>
 
-              <h2 className="text-2xl font-bold text-center mb-2">
-                {isLogin ? "Welcome back" : "Create your account"}
+              <h2 className="text-3xl font-bold text-center mb-2">
+                {isLogin ? "Welcome back" : "Get started"}
               </h2>
               <p className="text-slate-400 text-center text-sm mb-8">
-                {isLogin ? "Sign in to analyze your contracts with AI" : "Start your AI-powered contract analysis journey"}
+                {isLogin ? "Sign in to your AI contract analyst" : "Create your free account today"}
               </p>
 
               {error && (
@@ -430,13 +604,13 @@ function App() {
 
               <form onSubmit={handleAuth} className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-300">Email</label>
+                  <label className="text-sm font-medium text-slate-300">Email address</label>
                   <input 
                     type="email" 
                     placeholder="you@company.com" 
                     value={email} 
                     onChange={(e) => setEmail(e.target.value)} 
-                    className="w-full p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all disabled:opacity-50" 
+                    className="w-full p-3.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all disabled:opacity-50" 
                     required 
                     disabled={authLoading || !!successMessage} 
                   />
@@ -448,13 +622,13 @@ function App() {
                     placeholder="••••••••" 
                     value={password} 
                     onChange={(e) => setPassword(e.target.value)} 
-                    className="w-full p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all disabled:opacity-50" 
+                    className="w-full p-3.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all disabled:opacity-50" 
                     required 
                     disabled={authLoading || !!successMessage} 
                   />
                 </div>
 
-                <GlowButton type="submit" disabled={authLoading || !!successMessage} className="w-full mt-2">
+                <GlowButton type="submit" disabled={authLoading || !!successMessage} className="w-full mt-2 py-3.5">
                   {authLoading ? (
                     <span className="flex items-center justify-center gap-2">
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin-slow" />
@@ -476,7 +650,7 @@ function App() {
                   {isLogin ? "Sign Up" : "Sign In"}
                 </button>
               </p>
-            </GlassCard>
+            </Card>
           </div>
         </div>
       </div>
@@ -486,43 +660,35 @@ function App() {
   // ─── LANDING PAGE ───
   if (view === 'landing') {
     return (
-      <div className="min-h-screen text-white relative overflow-hidden">
-        <style>{animationStyles}</style>
-        <AnimatedBackground />
+      <div className="min-h-screen text-white relative overflow-hidden mesh-gradient">
+        <style>{globalStyles}</style>
+        <div className="noise-overlay" />
+        <div className="grid-pattern fixed inset-0 pointer-events-none" />
 
-        <nav className="border-b border-slate-800/50 backdrop-blur-xl bg-slate-900/50 sticky top-0 z-50">
-          <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Logo />
-              <span className="text-xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">ContractScan</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <GlowButton variant="ghost" onClick={() => navigateTo('analyze')} className="flex items-center gap-2">
-                <SparkleIcon /> Analyze
-              </GlowButton>
-              <GlowButton variant="ghost" onClick={fetchHistory} className="flex items-center gap-2">
-                <HistoryIcon /> History
-              </GlowButton>
-              <GlowButton variant="danger" onClick={handleLogout} className="flex items-center gap-2">
-                <LogoutIcon /> Logout
-              </GlowButton>
-            </div>
-          </div>
-        </nav>
+        {/* Floating orbs */}
+        <div className="fixed top-0 left-1/4 w-[500px] h-[500px] bg-indigo-500/15 rounded-full blur-[120px] animate-pulse-glow" />
+        <div className="fixed bottom-0 right-1/4 w-[600px] h-[600px] bg-purple-500/15 rounded-full blur-[120px] animate-pulse-glow" style={{ animationDelay: '3s' }} />
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-cyan-500/8 rounded-full blur-[150px]" />
 
-        <div className={`max-w-6xl mx-auto px-6 py-20 transition-all duration-500 ${pageTransition ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
-          <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-sm font-medium mb-6">
+        <Navbar token={token} onNavigate={navigateTo} onLogout={handleLogout} activeView={view} />
+
+        <div className={`max-w-7xl mx-auto px-6 py-20 relative z-10 transition-all duration-500 ${pageTransition ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
+          {/* Hero */}
+          <div className="text-center mb-24 animate-fade-in-up">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-indigo-300 text-sm font-medium mb-8 backdrop-blur-sm">
               <SparkleIcon /> AI-Powered Contract Analysis
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-              <span className="bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">Understand Your</span>
+
+            <h1 className="text-6xl md:text-8xl font-bold mb-8 leading-[1.1] tracking-tight">
+              <span className="text-white">Understand Your</span>
               <br />
-              <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Contracts in Seconds</span>
+              <span className="gradient-text-accent">Contracts in Seconds</span>
             </h1>
-            <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+
+            <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed">
               Upload any contract and let our AI identify risks, summarize terms, and answer your questions — all in one place.
             </p>
+
             <div className="flex items-center justify-center gap-4">
               <GlowButton onClick={() => navigateTo('analyze')} className="flex items-center gap-2 px-8 py-4 text-base">
                 <UploadIcon /> Upload Contract
@@ -533,40 +699,50 @@ function App() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 mb-20">
-            <FeatureCard 
-              icon={<SparkleIcon />}
-              title="AI-Powered Analysis"
-              description="Our advanced AI reads and understands complex legal language, extracting key terms and identifying potential risks automatically."
-            />
-            <FeatureCard 
-              icon={<ShieldIcon />}
-              title="Risk Detection"
-              description="Spot hidden clauses, unfair terms, and potential liabilities before you sign. Protect yourself with intelligent contract review."
-            />
-            <FeatureCard 
-              icon={<ZapIcon />}
-              title="Instant Q&A"
-              description="Chat with your contract. Ask questions in plain English and get clear, contextual answers about any clause or term."
-            />
+          {/* Feature Cards */}
+          <div className="grid md:grid-cols-3 gap-6 mb-24">
+            <Card className="group animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                <SparkleIcon />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">AI-Powered Analysis</h3>
+              <p className="text-slate-400 leading-relaxed">Our advanced AI reads and understands complex legal language, extracting key terms and identifying potential risks automatically.</p>
+            </Card>
+
+            <Card className="group animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                <ShieldIcon />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Risk Detection</h3>
+              <p className="text-slate-400 leading-relaxed">Spot hidden clauses, unfair terms, and potential liabilities before you sign. Protect yourself with intelligent contract review.</p>
+            </Card>
+
+            <Card className="group animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500/20 to-rose-500/20 border border-pink-500/20 flex items-center justify-center text-pink-400 mb-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                <ZapIcon />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-3">Instant Q&A</h3>
+              <p className="text-slate-400 leading-relaxed">Chat with your contract. Ask questions in plain English and get clear, contextual answers about any clause or term.</p>
+            </Card>
           </div>
 
-          <GlassCard className="p-8" hover={false}>
+          {/* Stats Bar */}
+          <Card className="p-10" hover={false}>
             <div className="grid md:grid-cols-3 gap-8 text-center">
-              <div>
-                <div className="text-4xl font-bold text-indigo-400 mb-2">10x</div>
-                <div className="text-slate-400 text-sm">Faster than manual review</div>
+              <div className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                <div className="text-5xl font-bold gradient-text mb-2">10x</div>
+                <div className="text-slate-400 text-sm uppercase tracking-wider">Faster Review</div>
               </div>
-              <div>
-                <div className="text-4xl font-bold text-purple-400 mb-2">99%</div>
-                <div className="text-slate-400 text-sm">Clause detection accuracy</div>
+              <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                <div className="text-5xl font-bold gradient-text mb-2">99%</div>
+                <div className="text-slate-400 text-sm uppercase tracking-wider">Detection Accuracy</div>
               </div>
-              <div>
-                <div className="text-4xl font-bold text-pink-400 mb-2">24/7</div>
-                <div className="text-slate-400 text-sm">Available anytime</div>
+              <div className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+                <div className="text-5xl font-bold gradient-text mb-2">24/7</div>
+                <div className="text-slate-400 text-sm uppercase tracking-wider">Always Available</div>
               </div>
             </div>
-          </GlassCard>
+          </Card>
         </div>
       </div>
     );
@@ -575,51 +751,33 @@ function App() {
   // ─── ANALYZE VIEW ───
   if (view === 'analyze') {
     return (
-      <div className="min-h-screen text-white relative overflow-hidden">
-        <style>{animationStyles}</style>
-        <AnimatedBackground />
+      <div className="min-h-screen text-white relative overflow-hidden mesh-gradient">
+        <style>{globalStyles}</style>
+        <div className="noise-overlay" />
 
-        <nav className="border-b border-slate-800/50 backdrop-blur-xl bg-slate-900/50 sticky top-0 z-50">
-          <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateTo('landing')}>
-              <Logo />
-              <span className="text-xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">ContractScan</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <GlowButton variant="ghost" onClick={() => navigateTo('analyze')} className="flex items-center gap-2 text-indigo-400">
-                <SparkleIcon /> Analyze
-              </GlowButton>
-              <GlowButton variant="ghost" onClick={fetchHistory} className="flex items-center gap-2">
-                <HistoryIcon /> History
-              </GlowButton>
-              <GlowButton variant="danger" onClick={handleLogout} className="flex items-center gap-2">
-                <LogoutIcon /> Logout
-              </GlowButton>
-            </div>
-          </div>
-        </nav>
+        <Navbar token={token} onNavigate={navigateTo} onLogout={handleLogout} activeView={view} />
 
-        <div className={`max-w-4xl mx-auto px-6 py-12 transition-all duration-500 ${pageTransition ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Upload Your Contract</h1>
-            <p className="text-slate-400">Drag and drop or click to upload a PDF, DOCX, or TXT file</p>
+        <div className={`max-w-4xl mx-auto px-6 py-12 relative z-10 transition-all duration-500 ${pageTransition ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
+          <div className="mb-10 animate-fade-in-up">
+            <h1 className="text-4xl font-bold mb-3">Upload Your Contract</h1>
+            <p className="text-slate-400 text-lg">Drag and drop or click to upload a PDF, DOCX, or TXT file</p>
           </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 text-red-300 p-4 rounded-xl mb-6 text-sm flex items-start gap-3">
+            <div className="bg-red-500/10 border border-red-500/30 text-red-300 p-4 rounded-xl mb-6 text-sm flex items-start gap-3 animate-fade-in">
               <WarningIcon />
               <span>{error}</span>
             </div>
           )}
 
-          <GlassCard className="p-8 mb-8">
+          <Card className="p-8 mb-8 animate-fade-in-up" hover={false}>
             <div 
-              className={`border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 cursor-pointer ${
+              className={`border-2 border-dashed rounded-2xl p-14 text-center transition-all duration-300 cursor-pointer ${
                 isDragging 
                   ? 'border-indigo-500 bg-indigo-500/10 scale-[1.02]' 
                   : file 
                     ? 'border-emerald-500/50 bg-emerald-500/5' 
-                    : 'border-slate-600 hover:border-slate-500 hover:bg-slate-800/30'
+                    : 'border-white/10 hover:border-white/20 hover:bg-white/5'
               }`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -630,18 +788,18 @@ function App() {
 
               {file ? (
                 <div className="animate-fade-in">
-                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
-                    <FileTextIcon />
+                  <div className="w-20 h-20 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-4 text-emerald-400">
+                    <DocumentIcon />
                   </div>
-                  <p className="text-xl font-semibold text-emerald-400 mb-2">{file.name}</p>
+                  <p className="text-2xl font-bold text-emerald-400 mb-2">{file.name}</p>
                   <p className="text-sm text-slate-400">{(file.size / 1024).toFixed(1)} KB • Click to change file</p>
                 </div>
               ) : (
                 <div>
-                  <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center mx-auto mb-4 text-slate-400">
-                    <UploadIcon />
+                  <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-4 text-slate-500">
+                    <ArrowUpIcon />
                   </div>
-                  <p className="text-xl font-semibold mb-2">Drop your contract here</p>
+                  <p className="text-2xl font-bold mb-2">Drop your contract here</p>
                   <p className="text-sm text-slate-400">or click to browse • PDF, DOCX, DOC, TXT</p>
                 </div>
               )}
@@ -650,7 +808,7 @@ function App() {
             <GlowButton 
               onClick={handleAnalyze} 
               disabled={!file || loading} 
-              className="w-full mt-6 py-4 text-base flex items-center justify-center gap-3"
+              className="w-full mt-8 py-4 text-base flex items-center justify-center gap-3"
             >
               {loading ? (
                 <>
@@ -663,13 +821,13 @@ function App() {
                 </>
               )}
             </GlowButton>
-          </GlassCard>
+          </Card>
 
           {result && (
             <div className="animate-fade-in-up">
-              <GlassCard className="p-8" hover={false}>
-                <div className="flex items-center gap-4 mb-6">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${result.is_likely_contract ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+              <Card className="p-8" hover={false}>
+                <div className="flex items-center gap-4 mb-8">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${result.is_likely_contract ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
                     {result.is_likely_contract ? <CheckIcon /> : <WarningIcon />}
                   </div>
                   <div>
@@ -680,23 +838,19 @@ function App() {
                   </div>
                   <div className="ml-auto">
                     {result.is_likely_contract ? (
-                      <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold px-4 py-2 rounded-full">
-                        Contract Detected
-                      </span>
+                      <Badge color="emerald"><CheckIcon /> Contract Detected</Badge>
                     ) : (
-                      <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold px-4 py-2 rounded-full">
-                        Review Needed
-                      </span>
+                      <Badge color="amber"><WarningIcon /> Review Needed</Badge>
                     )}
                   </div>
                 </div>
 
-                <div className="bg-slate-950/50 p-6 rounded-xl border border-slate-800">
+                <div className="bg-black/40 p-6 rounded-xl border border-white/5">
                   <div className="text-slate-300 whitespace-pre-wrap leading-relaxed text-sm font-mono">
                     {result.analysis ? result.analysis : "No text could be extracted. Try a text-based PDF or DOCX."}
                   </div>
                 </div>
-              </GlassCard>
+              </Card>
             </div>
           )}
         </div>
@@ -707,57 +861,39 @@ function App() {
   // ─── HISTORY VIEW ───
   if (view === 'history') {
     return (
-      <div className="min-h-screen text-white relative overflow-hidden">
-        <style>{animationStyles}</style>
-        <AnimatedBackground />
+      <div className="min-h-screen text-white relative overflow-hidden mesh-gradient">
+        <style>{globalStyles}</style>
+        <div className="noise-overlay" />
 
-        <nav className="border-b border-slate-800/50 backdrop-blur-xl bg-slate-900/50 sticky top-0 z-50">
-          <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateTo('landing')}>
-              <Logo />
-              <span className="text-xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">ContractScan</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <GlowButton variant="ghost" onClick={() => navigateTo('analyze')} className="flex items-center gap-2">
-                <SparkleIcon /> Analyze
-              </GlowButton>
-              <GlowButton variant="ghost" onClick={fetchHistory} className="flex items-center gap-2 text-indigo-400">
-                <HistoryIcon /> History
-              </GlowButton>
-              <GlowButton variant="danger" onClick={handleLogout} className="flex items-center gap-2">
-                <LogoutIcon /> Logout
-              </GlowButton>
-            </div>
-          </div>
-        </nav>
+        <Navbar token={token} onNavigate={navigateTo} onLogout={handleLogout} activeView={view} />
 
-        <div className={`max-w-4xl mx-auto px-6 py-12 transition-all duration-500 ${pageTransition ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Analysis History</h1>
-            <p className="text-slate-400">Review and chat with your previously analyzed contracts</p>
+        <div className={`max-w-4xl mx-auto px-6 py-12 relative z-10 transition-all duration-500 ${pageTransition ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
+          <div className="mb-10 animate-fade-in-up">
+            <h1 className="text-4xl font-bold mb-3">Analysis History</h1>
+            <p className="text-slate-400 text-lg">Review and chat with your previously analyzed contracts</p>
           </div>
 
           {historyList.length === 0 ? (
-            <GlassCard className="p-12 text-center" hover={false}>
-              <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center mx-auto mb-4 text-slate-500">
+            <Card className="p-16 text-center" hover={false}>
+              <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-6 text-slate-500">
                 <HistoryIcon />
               </div>
-              <h3 className="text-xl font-semibold mb-2">No history yet</h3>
-              <p className="text-slate-400 mb-6">Upload a contract to get started with AI analysis</p>
+              <h3 className="text-2xl font-bold mb-3">No history yet</h3>
+              <p className="text-slate-400 mb-8 max-w-md mx-auto">Upload a contract to get started with AI-powered analysis and intelligent risk detection.</p>
               <GlowButton onClick={() => navigateTo('analyze')} className="flex items-center gap-2 mx-auto">
                 <SparkleIcon /> Analyze First Contract
               </GlowButton>
-            </GlassCard>
+            </Card>
           ) : (
             <div className="space-y-4">
-              {historyList.map(item => (
-                <GlassCard key={item.id} className="p-6 flex items-center justify-between group">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-                      <FileTextIcon />
+              {historyList.map((item, idx) => (
+                <Card key={item.id} className="flex items-center justify-between group animate-fade-in-up" style={{ animationDelay: `${idx * 0.1}s` }}>
+                  <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500/20 transition-all duration-300">
+                      <DocumentIcon />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-lg group-hover:text-indigo-300 transition-colors">{item.filename}</h3>
+                      <h3 className="font-bold text-lg text-white group-hover:text-indigo-300 transition-colors">{item.filename}</h3>
                       <p className="text-slate-400 text-sm">{new Date(item.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                     </div>
                   </div>
@@ -776,7 +912,7 @@ function App() {
                       <BotIcon /> Chat
                     </GlowButton>
                   </div>
-                </GlassCard>
+                </Card>
               ))}
             </div>
           )}
@@ -788,62 +924,47 @@ function App() {
   // ─── CHAT VIEW ───
   if (view === 'chat' && selectedHistory) {
     return (
-      <div className="min-h-screen text-white relative overflow-hidden flex flex-col">
-        <style>{animationStyles}</style>
-        <AnimatedBackground />
+      <div className="min-h-screen text-white relative overflow-hidden flex flex-col mesh-gradient">
+        <style>{globalStyles}</style>
+        <div className="noise-overlay" />
 
-        <nav className="border-b border-slate-800/50 backdrop-blur-xl bg-slate-900/50 sticky top-0 z-50">
-          <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigateTo('landing')}>
-              <Logo />
-              <span className="text-xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">ContractScan</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <GlowButton variant="ghost" onClick={() => navigateTo('analyze')} className="flex items-center gap-2">
-                <SparkleIcon /> Analyze
-              </GlowButton>
-              <GlowButton variant="ghost" onClick={fetchHistory} className="flex items-center gap-2">
-                <HistoryIcon /> History
-              </GlowButton>
-              <GlowButton variant="danger" onClick={handleLogout} className="flex items-center gap-2">
-                <LogoutIcon /> Logout
-              </GlowButton>
-            </div>
-          </div>
-        </nav>
+        <Navbar token={token} onNavigate={navigateTo} onLogout={handleLogout} activeView={view} />
 
-        <div className={`flex-1 max-w-4xl mx-auto w-full px-6 py-8 flex flex-col transition-all duration-500 ${pageTransition ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
-          <div className="flex items-center justify-between mb-6">
+        <div className={`flex-1 max-w-4xl mx-auto w-full px-6 py-8 flex flex-col relative z-10 transition-all duration-500 ${pageTransition ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
+          <div className="flex items-center justify-between mb-8 animate-fade-in-up">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-                <FileTextIcon />
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                <DocumentIcon />
               </div>
               <div>
-                <h2 className="text-lg font-bold">{selectedHistory.filename}</h2>
-                <p className="text-slate-400 text-sm">AI Contract Assistant</p>
+                <h2 className="text-xl font-bold">{selectedHistory.filename}</h2>
+                <p className="text-slate-400 text-sm flex items-center gap-2">
+                  <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                  AI Contract Assistant Online
+                </p>
               </div>
             </div>
             <GlowButton variant="secondary" onClick={() => navigateTo('history')} className="flex items-center gap-2">
-              <ArrowRightIcon /> Back to History
+              <ChevronLeftIcon /> Back
             </GlowButton>
           </div>
 
-          <GlassCard className="flex-1 flex flex-col min-h-[500px] mb-6" hover={false}>
+          <Card className="flex-1 flex flex-col min-h-[500px] mb-6" hover={false}>
             <div className="flex-1 p-6 overflow-y-auto space-y-6">
               {chatMessages.map((msg, idx) => (
                 <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}>
                   <div className={`flex gap-3 max-w-[85%] ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
                       msg.role === 'user' 
-                        ? 'bg-indigo-500 text-white' 
-                        : 'bg-slate-700 text-slate-300'
+                        ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white' 
+                        : 'bg-white/5 border border-white/10 text-slate-400'
                     }`}>
                       {msg.role === 'user' ? <UserIcon /> : <BotIcon />}
                     </div>
                     <div className={`p-4 rounded-2xl text-sm leading-relaxed ${
                       msg.role === 'user' 
-                        ? 'bg-indigo-600 text-white rounded-tr-sm' 
-                        : 'bg-slate-800 border border-slate-700 text-slate-200 rounded-tl-sm'
+                        ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-tr-sm' 
+                        : 'bg-white/5 border border-white/10 text-slate-200 rounded-tl-sm'
                     }`}>
                       <div dangerouslySetInnerHTML={{ __html: formatMessage(msg.text) }} />
                     </div>
@@ -854,10 +975,10 @@ function App() {
               {chatLoading && (
                 <div className="flex justify-start animate-fade-in">
                   <div className="flex gap-3 max-w-[85%]">
-                    <div className="w-8 h-8 rounded-lg bg-slate-700 text-slate-300 flex items-center justify-center flex-shrink-0">
+                    <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 text-slate-400 flex items-center justify-center flex-shrink-0">
                       <BotIcon />
                     </div>
-                    <div className="bg-slate-800 border border-slate-700 rounded-2xl rounded-tl-sm">
+                    <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm">
                       <TypingIndicator />
                     </div>
                   </div>
@@ -866,20 +987,20 @@ function App() {
               <div ref={chatEndRef} />
             </div>
 
-            <form onSubmit={handleChatSubmit} className="p-4 border-t border-slate-700/50 flex gap-3">
+            <form onSubmit={handleChatSubmit} className="p-4 border-t border-white/5 flex gap-3">
               <input 
                 type="text" 
                 value={chatInput} 
                 onChange={(e) => setChatInput(e.target.value)} 
                 placeholder="Ask about this contract..." 
-                className="flex-1 bg-slate-800/80 border border-slate-700 rounded-xl p-3.5 text-white placeholder-slate-500 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all"
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3.5 text-white placeholder-slate-500 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
                 disabled={chatLoading}
               />
               <GlowButton type="submit" disabled={chatLoading || !chatInput.trim()} className="flex items-center gap-2 px-6">
                 <SendIcon /> Send
               </GlowButton>
             </form>
-          </GlassCard>
+          </Card>
         </div>
       </div>
     );
